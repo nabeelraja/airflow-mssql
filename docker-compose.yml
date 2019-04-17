@@ -1,0 +1,23 @@
+version: "2.0"
+
+services:
+    # db:
+    #     image: mcr.microsoft.com/mssql/server:2017-latest
+    #     environment:
+    #         ACCEPT_EULA: Y
+    #         MSSQL_SA_PASSWORD: StrongPassw0rd
+    #     ports:
+    #         - "1433:1433"
+    db:
+        image: postgres:9.4
+        environment:
+            POSTGRES_DB: airflow
+            POSTGRES_USER: airflow
+            POSTGRES_PASSWORD: airflow
+        ports:
+            - "5432:5432"
+    airflow:
+        image: nabeelraja/apache-airflow-centos7:1.10.3
+        ports:
+            - "8080:8080"
+        tty: true

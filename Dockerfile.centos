@@ -1,0 +1,55 @@
+FROM centos:7
+LABEL maintainer="LBG"
+
+# Never prompts the user for choices on installation/configuration of packages
+ENV DEBIAN_FRONTEND noninteractive
+ENV TERM linux
+ENV ACCEPT_EULA Y
+
+# Airflow setup
+ARG AIRFLOW_VERSION=1.10.3
+ENV AIRFLOW_HOME /opt/airflow
+ENV AIRFLOW_GPL_UNIDECODE yes
+
+# Installation of required tools
+RUN \
+    # Update yum
+    yum  -y update && \
+    # Enable epel repo
+    yum -y install epel-release && \
+    # Install required dependencies
+    yum -y install \
+        python-pip \
+        gcc \
+        gcc-c++ \
+        unixODBC \
+        unixODBC-devel \
+        python-devel \
+        cyrus-sasl-devel \
+        postgresql-devel && \
+    # Upgrade setup tools
+    pip install --upgrade --ignore-installed setuptools
+
+# Install MS ODBC Drivers
+RUN \
+    curl https://packages.microsoft.com/config/rhel/7/prod.repo > /etc/yum.repos.d/mssql-release.repo && \
+    yum -y install msodbcsql17
+
+# Install apache workflow and its dependencies
+RUN \
+    pip install apache-airflow==${AIRFLOW_VERSION} pyodbc psycopg2 enum ldap3
+
+# Copy the airflow configuration file
+COPY configs/airflow-docker.cfg ${AIRFLOW_HOME}/airflow.cfg
+
+# Copy the dags
+COPY /dags/ ${AIRFLOW_HOME}/dags/
+
+# Add pip.conf to use Lloyds Nexus Repository instead of PyPI
+# COPY configs/pip.conf /etc/pip.conf
+
+# Update the kerberos configuration
+# COPY configs/krb5.conf /etc/krb5.conf
+
+EXPOSE 8080
+WORKDIR ${AIRFLOW_HOME}
